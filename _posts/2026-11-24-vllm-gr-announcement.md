@@ -28,7 +28,7 @@ The overview shows how recommendation models generate item IDs or score supplied
 
 A recommendation service has to turn a long interaction history into a set of candidates within a single request’s latency budget. Generating each item ID may take only a few tokens, yet the engine must explore many paths and return items the application can serve.
 
-1. **Run recommendation models on the vLLM stack.** Teams can reuse vLLM’s model execution, scheduling, and paged KV cache when moving from offline evaluation to online serving on NVIDIA GPUs and Ascend NPUs.
+1. **Run recommendation models on the vLLM stack.** Teams can reuse vLLM’s model execution, scheduling, and paged KV cache when moving from offline evaluation to online serving on Ascend NPUs.
 2. **Reduce the cost of wide candidate searches.** Candidate paths share the cached user history. The engine runs successive beam-search steps in one request and selects candidates on the accelerator, reducing duplicate work and per-step coordination with the host.
 3. **Keep recommendations aligned with the item catalog.** Catalog constraints guide the search toward IDs that map to real items. Support for model and catalog updates lets teams refresh what the service recommends as models and inventory change.
 
@@ -56,63 +56,17 @@ EngineCore owns each beam session from admission to completion. The scheduler di
 
 ## Performance Evaluation
 
-The benchmarks measure P99 latency to show how beam width and batch size affect tail latency for generative recommendation. The two overview charts hold the input length at 1,024 tokens and compare beam widths of 256 and 128 at batch sizes 1, 4, and 8 across four NVIDIA GPUs and two Ascend NPUs. The figures summarize separate benchmark runs with different timing definitions, sample counts, and backend settings.
+The benchmarks measure P99 latency to show how beam width and batch size affect tail latency for generative recommendation. The two overview charts hold the input length at 1,024 tokens and compare beam widths of 256 and 128 at batch sizes 1, 4, and 8 on Ascend A2 and A5. The figures summarize separate benchmark runs with different timing definitions, sample counts, and backend settings.
 
-On RTX PRO 6000, vLLM-GR, SGLang Beam, and NVIDIA SID-GR ran OneRec-1.7B in BF16 and generated three tokens from the same synthetic inputs with catalog constraints disabled. Each point reports whole-batch P99 over 48 timed batches after three warmups. Timing includes returning candidate IDs and scores to the host and excludes HTTP. With beam width denoted by *W* and candidate pool size by *K*, vLLM-GR and NVIDIA SID-GR used *K* equal to *W*. SGLang Beam used its native pool of *2W* candidates.
+On Ascend A2 and A5, vLLM-GR and xLLM used a catalog constraint table. The SGLang constraint setting was not recorded in the benchmark summary. The available summaries do not specify exact backend revisions or warmup counts for these comparisons.
 
-On the Ascend A2 and A5, vLLM-GR and xLLM used a catalog constraint table. The SGLang constraint setting was not recorded in the benchmark summary. Recorded L20 sample counts range from 100 to 1,000 timed batches per configuration. The available summaries do not specify exact backend revisions for these comparisons or warmup counts outside the RTX PRO 6000 run.
+![P99 latency on Ascend A2 and A5 at beam width 256 and 1,024 input tokens, for batch sizes 1, 4, and 8. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview.svg)
 
-![P99 latency at beam width 256 and 1,024 input tokens across six accelerators, for batch sizes 1, 4 and 8. On the Ascend NPU platforms (A2 and A5), vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview.svg)
+![P99 latency on Ascend A2 and A5 at beam width 128 and 1,024 input tokens, for batch sizes 1, 4, and 8. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg)
 
-![P99 latency at beam width 128 and 1,024 input tokens across six accelerators, for batch sizes 1, 4 and 8. On the Ascend NPU platforms (A2 and A5), vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg)
-
-At beam width 256, vLLM-GR recorded the lowest P99 among the backends shown at batch sizes 4 and 8 on all six accelerators. On H20 at beam width 256 and batch size 8, P99 was 369.4 ms for vLLM-GR, 1,280.1 ms for SGLang, and 428.1 ms for NVIDIA SID-GR.
-
-At beam width 256 and batch size 1 on RTX PRO 6000, NVIDIA SID-GR reported 28.25 ms versus 29.21 ms for vLLM-GR. On A2 at the same beam width and batch size 8, vLLM-GR and xLLM reported 312.69 ms and 324.60 ms, respectively, with catalog constraints enabled for both. At beam width 128, the lowest-latency backend varies by accelerator and batch size.
+At beam width 256, vLLM-GR recorded the lowest P99 among the backends shown at batch sizes 4 and 8 on both NPUs. At batch size 8 on A2, vLLM-GR and xLLM reported 312.69 ms and 324.60 ms, respectively, with catalog constraints enabled for both.
 
 Expand the hardware sections below to see how latency changes across a wider range of beam widths and input lengths. The tested ranges vary by accelerator and batch size.
-
-<details markdown="1">
-<summary markdown="0">H20 · B=1, B=4 and B=8</summary>
-
-At beam width 256 and batch size 4, vLLM-GR and NVIDIA SID-GR both measured about 191 ms P99. At batch size 8, their P99 latencies were 369.4 ms and 428.1 ms, respectively.
-
-![H20 batch-1 P99 latency in milliseconds across beam widths and input lengths.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/h20-b1.png)
-
-![H20 P99 latency at batch sizes 4 (top) and 8 (bottom). The plots show latency against beam width at 1,024 and 8,192 input tokens and against input length at beam widths 64 and 1,024.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/h20.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">RTX PRO 6000 · B=1, B=4 and B=8</summary>
-
-NVIDIA SID-GR had the lowest P99 at batch size 1 for both overview beam widths. vLLM-GR had the lowest P99 at batch sizes 4 and 8 for both widths.
-
-![RTX PRO 6000 P99 latency in milliseconds for batch sizes 1, 4 and 8, from top to bottom. Each panel compares vLLM-GR, SGLang Beam and NVIDIA SID-GR across beam widths and input lengths.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/rtx-pro-6000.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">A100 · B=1, B=4 and B=8</summary>
-
-At batch size 8, NVIDIA SID-GR measured 199.0 ms and vLLM-GR measured 209.7 ms at beam width 128. At beam width 256, vLLM-GR measured 274.5 ms and NVIDIA SID-GR measured 451.5 ms.
-
-![A100 batch-1 P99 latency in milliseconds across beam widths and input lengths.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a100-b1.png)
-
-![A100 P99 latency at batch sizes 4 (top) and 8 (bottom). The plots show latency against beam width at 1,024 and 8,192 input tokens and against input length at beam widths 64 and 1,024.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a100.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">L20 · B=1, B=4 and B=8</summary>
-
-At batch size 8 and beam width 256, vLLM-GR measured 474.3 ms P99, followed by NVIDIA SID-GR at 790.7 ms.
-
-![L20 batch-1 P99 latency in milliseconds across beam widths and input lengths.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/l20-b1.png)
-
-![L20 P99 latency for batch 4 (top) and batch 8 (bottom). The beam-width sweeps use 1,024 input tokens for both batches, plus 8,192 for batch 4 and 4,096 for batch 8. The batch-8 input-length sweeps at beam widths 64 and 1,024 cover 256 to 4,096 tokens.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/l20.png)
-
-</details>
 
 <details markdown="1">
 <summary markdown="0">A2 · B=1, B=4 and B=8</summary>
@@ -149,15 +103,15 @@ We’re working toward a framework that can serve both candidate generation and 
 
 ## Getting Started
 
-vLLM-GR 0.30.0 is built on vLLM 0.30.0 and supports NVIDIA GPUs and Ascend NPUs.
+vLLM-GR 0.30.0 is built on vLLM 0.30.0 and supports Ascend NPUs.
 
 ### Installation
 
-Follow the installation guide for your accelerator, either [NVIDIA CUDA](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/gpu.md) or [Ascend NPU](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/npu.md).
+Follow the [Ascend NPU installation guide](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/npu.md).
 
 ### Serving Generative Recommendation Models
 
-Run OneRec-1.7B [offline](https://github.com/vllm-project/vllm-gr/blob/main/examples/offline_inference/beam_search/README.md) or follow the [HTTP serving example](https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/beam_search/README.md) or the [gRPC serving example for CUDA](https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/grpc/README.md).
+Run OneRec-1.7B with the [Ascend offline quickstart](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/quickstart.md#ascend). For HTTP serving, follow the [OneRec example](https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/beam_search/README.md#run-one-request) with `--constraint-backend npu`.
 
 ## Join the Community
 
