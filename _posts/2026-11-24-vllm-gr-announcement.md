@@ -56,37 +56,37 @@ EngineCore owns each beam session from admission to completion. The scheduler di
 
 ## Performance Evaluation
 
-The benchmarks measure P99 latency to show how beam width and batch size affect tail latency for generative recommendation. The two overview charts hold the input length at 1,024 tokens and compare beam widths of 256 and 128 at batch sizes 1, 4, and 8 on Ascend A2 and A5. The figures summarize separate benchmark runs with different timing definitions, sample counts, and backend settings.
+The benchmarks measure P99 latency to show how beam width and batch size affect tail latency for generative recommendation. The two overview charts hold the input length at 1,024 tokens and compare beam widths of 256 and 128 at batch sizes 1, 4, and 8 on Ascend 910(A2) and Ascend 950. The figures summarize separate benchmark runs with different timing definitions, sample counts, and backend settings.
 
-On Ascend A2 and A5, vLLM-GR and xLLM used a catalog constraint table. The SGLang constraint setting was not recorded in the benchmark summary. The available summaries do not specify exact backend revisions or warmup counts for these comparisons.
+On Ascend 910(A2) and Ascend 950, vLLM-GR and xLLM used a catalog constraint table. The SGLang constraint setting was not recorded in the benchmark summary. The available summaries do not specify exact backend revisions or warmup counts for these comparisons.
 
-![P99 latency on Ascend A2 and A5 at beam width 256 and 1,024 input tokens, for batch sizes 1, 4, and 8. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview.svg)
+![P99 latency on Ascend 910(A2) and Ascend 950 at beam width 256 and 1,024 input tokens, for batch sizes 1, 4, and 8. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview.svg)
 
-![P99 latency on Ascend A2 and A5 at beam width 128 and 1,024 input tokens, for batch sizes 1, 4, and 8. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg)
+![P99 latency on Ascend 910(A2) and Ascend 950 at beam width 128 and 1,024 input tokens, for batch sizes 1, 4, and 8. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg)
 
-At beam width 256, vLLM-GR recorded the lowest P99 among the backends shown at batch sizes 4 and 8 on both NPUs. At batch size 8 on A2, vLLM-GR and xLLM reported 312.69 ms and 324.60 ms, respectively, with catalog constraints enabled for both.
+At beam width 256, vLLM-GR recorded the lowest P99 among the backends shown at batch sizes 4 and 8 on both NPUs. At batch size 8 on Ascend 910(A2), vLLM-GR and xLLM reported 312.69 ms and 324.60 ms, respectively, with catalog constraints enabled for both.
 
 Expand the hardware sections below to see how latency changes across a wider range of beam widths and input lengths. The tested ranges vary by accelerator and batch size.
 
 <details markdown="1">
-<summary markdown="0">A2 · B=1, B=4 and B=8</summary>
+<summary markdown="0">Ascend 910(A2) · B=1, B=4 and B=8</summary>
 
 Some curves end before the final configuration because those runs exceeded device memory. At 8,192 input tokens and batch size 8, vLLM-GR completed the beam-width sweep through 1,024.
 
-![A2 batch-1 P99 latency across beam widths and input lengths for vLLM-GR, SGLang and xLLM. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2-b1.png)
+![Ascend 910(A2) batch-1 P99 latency across beam widths and input lengths for vLLM-GR, SGLang and xLLM. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2-b1.png)
 
-![A2 P99 latency at batch sizes 4 (top) and 8 (bottom) for the same beam-width and input-length sweeps. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2.png)
+![Ascend 910(A2) P99 latency at batch sizes 4 (top) and 8 (bottom) for the same beam-width and input-length sweeps. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2.png)
 
 </details>
 
 <details markdown="1">
-<summary markdown="0">A5 · B=1, B=4 and B=8</summary>
+<summary markdown="0">Ascend 950 · B=1, B=4 and B=8</summary>
 
 At batch size 8, vLLM-GR measured 128.2 ms P99 at beam width 128 and 151.7 ms at beam width 256. It recorded the lowest P99 among the backends shown at all three batch sizes for both overview beam widths.
 
-![A5 batch-1 P99 latency in milliseconds across beam widths and input lengths. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5-b1.png)
+![Ascend 950 batch-1 P99 latency in milliseconds across beam widths and input lengths. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5-b1.png)
 
-![A5 P99 latency at batch sizes 4 (top) and 8 (bottom). The plots show latency against beam width at 1,024 and 8,192 input tokens and against input length at beam widths 64 and 1,024. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5.png)
+![Ascend 950 P99 latency at batch sizes 4 (top) and 8 (bottom). The plots show latency against beam width at 1,024 and 8,192 input tokens and against input length at beam widths 64 and 1,024. vLLM-GR and xLLM used a catalog constraint table.](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5.png)
 
 </details>
 

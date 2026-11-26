@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1040" height="360" viewBox="0 0 1040 360" font-family="Open Sans, Arial, Helvetica, sans-serif" role="img" aria-labelledby="t d">
   <title id="t">Ascend NPU P99 latency at batch sizes 1, 4 and 8</title>
-  <desc id="d">Horizontal bars compare reported P99 latency on Ascend A2 and A5 at 1,024 input tokens and beam width 128. Panels show batch sizes 1, 4, and 8. Lower latency is better. The axes span 0 to 200 milliseconds for batch size 1, 0 to 600 for batch size 4, and 0 to 1,800 for batch size 8. On Ascend A2 and A5, vLLM-GR and xLLM used catalog constraints. Measurement settings vary across runs.</desc>
+  <desc id="d">Horizontal bars compare reported P99 latency on Ascend 910(A2) and Ascend 950 at 1,024 input tokens and beam width 128. Panels show batch sizes 1, 4, and 8. Lower latency is better. The axes span 0 to 200 milliseconds for batch size 1, 0 to 600 for batch size 4, and 0 to 1,800 for batch size 8. On Ascend 910(A2) and Ascend 950, vLLM-GR and xLLM used catalog constraints. Measurement settings vary across runs.</desc>
   <rect x="0" y="0" width="1040" height="360" fill="white"/>
   <text x="24" y="43" font-size="30" fill="#192F3D" font-weight="700">Ascend NPU P99 latency at batch sizes 1, 4 and 8</text>
   <text x="25" y="72" font-size="17" fill="#465B69">1,024 input tokens   ·   Beam width 128   ·   P99 in milliseconds, lower is better</text>
@@ -11,7 +11,7 @@
   <text x="155" y="104" font-size="14" fill="#192F3D">SGLang</text>
   <rect x="227" y="95" width="18" height="8" fill="#343A40"/>
   <text x="253" y="104" font-size="14" fill="#192F3D">xLLM</text>
-  <text x="1016" y="104" font-size="12.5" fill="#465B69" text-anchor="end">vLLM-GR and xLLM used a catalog constraint table on Ascend A2 and A5.</text>
+  <text x="1016" y="104" font-size="12.5" fill="#465B69" text-anchor="end">vLLM-GR and xLLM used a catalog constraint table on Ascend 910(A2) and Ascend 950.</text>
   <text x="143" y="143" font-size="18" fill="#192F3D" font-weight="700">Batch size 1</text>
   <text x="143" y="162" font-size="13" fill="#465B69">0–200 ms</text>
   <path d="M143 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
@@ -24,8 +24,8 @@
   <text x="323" y="315" font-size="13" fill="#465B69" text-anchor="middle">150</text>
   <path d="M383 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
   <text x="383" y="315" font-size="13" fill="#465B69" text-anchor="middle">200</text>
-  <text x="128" y="197" font-size="15" fill="#192F3D" text-anchor="end" font-weight="700">Ascend A2</text>
-  <text x="128" y="258" font-size="15" fill="#192F3D" text-anchor="end" font-weight="700">Ascend A5</text>
+  <text x="128" y="197" font-size="15" fill="#192F3D" text-anchor="end" font-weight="700">Ascend 910(A2)</text>
+  <text x="128" y="258" font-size="15" fill="#192F3D" text-anchor="end" font-weight="700">Ascend 950</text>
   <rect x="143" y="172.2" width="70.296" height="9.6" fill="#AD2876"/>
   <text x="217.30" y="181" font-size="12" fill="#192F3D">58.58</text>
   <rect x="143" y="187.2" width="164.340" height="9.6" fill="#165ED6"/>
