@@ -56,7 +56,7 @@ EngineCore owns each beam session from admission to completion. The scheduler di
 
 ## Performance Evaluation
 
-The P99 end-to-end latency measurements include both host CPU and device execution time, and measured results can vary with the specific machine used. We will continue to optimize vLLM-GR performance on Ascend.
+The P99 end-to-end latency measurements include both host CPU and device execution time, and measured results can vary with the specific machine used. The Ascend benchmark results are preliminary and reflect the current stage of optimization. We will continue to optimize vLLM-GR performance on Ascend.
 
 The benchmarks measure P99 latency to show how beam width and batch size affect tail latency for generative recommendation. The two overview charts hold the input length at 1,024 tokens and compare beam widths of 256 and 128 at batch sizes 1, 4, and 8 on Ascend 910(A2) and Ascend 950. The figures summarize separate benchmark runs with different timing definitions, sample counts, and backend settings.
 
