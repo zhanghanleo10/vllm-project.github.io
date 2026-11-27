@@ -3,8 +3,8 @@ layout: post
 title: "vLLM-GR 开源发布：昇腾 NPU 加速生成式推荐推理"
 author: vLLM-GR Team
 date: 2026-11-24 00:00:00 +0800
-summary: "vLLM-GR 支持在昇腾 NPU 上部署生成式推荐模型。通过设备端束搜索、物品目录约束和 KV 缓存复用，在一次请求中生成一组可用的推荐候选。"
-description: "vLLM-GR 支持在昇腾 NPU 上部署生成式推荐模型。通过设备端束搜索、物品目录约束和 KV 缓存复用，在一次请求中生成一组可用的推荐候选。"
+summary: "vLLM-GR 在昇腾 NPU 上可从长用户历史中一次生成一组符合物品目录约束的推荐候选。模型前向、候选筛选和逐轮解码在设备端衔接，减少候选逐轮回传主机的开销。"
+description: "vLLM-GR 在昇腾 NPU 上可从长用户历史中一次生成一组符合物品目录约束的推荐候选。模型前向、候选筛选和逐轮解码在设备端衔接，减少候选逐轮回传主机的开销。"
 image: /assets/figures/2026-11-24-vllm-gr-announcement/vLLM-GR.jpg
 social_image: /assets/figures/2026-11-24-vllm-gr-announcement/vLLM-GR.jpg
 tags:
@@ -14,15 +14,15 @@ tags:
 
 ![vLLM-GR 标志](/assets/figures/2026-11-24-vllm-gr-announcement/vLLM-GR.jpg)
 
-vLLM 社区正式发布 [**vLLM-GR**](https://github.com/vllm-project/vllm-gr)。本文以 OneRec-1.7B 为例，介绍 vLLM-GR 在昇腾（Ascend）NPU 上的推理实现，并给出从离线验证到在线 HTTP 服务部署的步骤。
+vLLM 社区正式发布 [**vLLM-GR**](https://github.com/vllm-project/vllm-gr)。以 OneRec-1.7B 为例，启用物品目录约束后，推荐服务可以在昇腾（Ascend）NPU 上用一次请求，从长用户历史中生成一组能对应到实际物品的推荐候选，并获得各候选的分数。
 
-在昇腾 NPU 上，模型前向和每轮束搜索的候选筛选均在设备端完成，减少了主机与设备之间的数据往返。多条候选路径共享用户历史的 KV 缓存，避免重复存储。应用发起一次请求即可获得一组推荐候选及其分数。
+**昇腾 NPU 承担候选生成的关键计算。** 模型前向打分、按物品目录筛选和逐轮解码都在设备端衔接。筛选结果直接用于下一轮解码，减少候选在主机与设备之间的往返。
 
-在昇腾 950 的初步评测中，输入长度为 1,024 个 token、批大小为 8、束宽为 128 时，vLLM-GR 的 **P99 端到端延迟仅为 128.2 ms**。
+在昇腾 950 的初步评测中，输入长度为 1,024 个 token、批大小为 8、束宽为 128 时，vLLM-GR 的 P99 端到端延迟为 **128.2 ms**。
 
 ## 一次推荐请求在昇腾上怎么执行
 
-以视频信息流为例，OneRec-1.7B 根据用户的观看历史生成视频的语义 ID（SID）。单个 SID 只需几个 token，但服务要在一次请求的延迟预算内搜索出一组候选，还要确保这些候选能映射到实际物品。沿图中的候选生成路径，vLLM-GR 可以在一次请求中生成 128 个候选 SID。
+以视频信息流为例，OneRec-1.7B 用语义 ID（SID）表示视频。单个 SID 只需几个 token，一次推荐请求则要在延迟预算内搜索多条候选路径。沿图中的候选生成路径，vLLM-GR 可以基于同一段观看历史在一次请求中生成 128 个候选 SID。
 
 ![交互历史和任务相关输入经过输入表示、推荐模型和候选预测三个环节。模型示例包括 OneRec-1.7B、HSTU 和 OneTrans，输出包括候选 ID 和排序分数。](/assets/figures/2026-11-24-vllm-gr-announcement/framework-overview.png)
 
@@ -30,7 +30,7 @@ vLLM-GR 复用 vLLM 的模型执行、调度和分页 KV 缓存。EngineCore 从
 
 ![蓝色表示复用的 vLLM 组件，例如 HTTP 入口和模型前向计算。黄色表示对 EngineCore 调度和 Worker 执行的扩展。粉色表示 vLLM-GR 新增的组件，包括离线和 gRPC 入口、束搜索会话、BeamAttn、后缀 KV，以及目录约束和全词表两种候选筛选方式。](/assets/figures/2026-11-24-vllm-gr-announcement/gr-inference-architecture.png)
 
-### 在 NPU 上筛选候选，减少主机与设备往返
+### 设备端目录筛选，直接衔接下一轮解码
 
 每轮束搜索生成候选前缀后，NPU 按物品目录约束表过滤无法延伸为有效物品的前缀，再保留得分最高的路径。筛选结果直接进入下一轮设备端解码，省去逐轮回传候选的开销。使用 NPU 约束表时，可以按阶段设置束宽和每条父路径的候选上限。昇腾也支持全词表搜索。[功能兼容性](https://github.com/vllm-project/vllm-gr/blob/main/docs/user_guide/feature_compatibility.md)
 
@@ -38,13 +38,13 @@ vLLM-GR 复用 vLLM 的模型执行、调度和分页 KV 缓存。EngineCore 从
 
 *图示请求按 2 → 3 → 2 的束宽搜索，最终返回两个候选。目录中没有物品以 `A1 · B1` 为 SID 前缀，这条路径会被过滤。全词表搜索会跳过目录过滤。图中的 SID 和分数均为示例。*
 
-### 共享历史 KV，降低宽束搜索的开销
+### 共享历史 KV，在昇腾上融合注意力计算
 
-同一请求中的候选路径共用用户历史的前缀 KV，各自维护分叉后的后缀 KV。每轮筛选记录入选路径的分数和父路径索引，下一轮据此读取对应的缓存。满足融合解码条件时，昇腾上的 XAttention 在一个算子内完成前缀和后缀的注意力计算，减少宽束搜索中的重复开销。[昇腾解码实现](https://github.com/vllm-project/vllm-gr/blob/main/docs/design/feature/npu_decode_execution.md)
+vLLM-GR 让同一请求中的候选路径共用用户历史的前缀 KV，避免为每条路径重复存储。各路径维护分叉后的后缀 KV，下一轮解码根据入选路径的父路径索引读取对应的缓存。安装 xllm-ops 后，满足融合条件的解码批次可以用昇腾后端的 XAttention，在一次算子调用中完成前缀和后缀的注意力计算，省去分别计算后再合并的步骤。[昇腾解码实现](https://github.com/vllm-project/vllm-gr/blob/main/docs/design/feature/npu_decode_execution.md)
 
-### 主机和 NPU 分阶段协作，缩短轮次间等待
+### 异步调度让主机准备与 NPU 执行重叠
 
-启用异步调度后，NPU 执行当前阶段的同时，主机可以准备下一轮解码。以三段式 SID 为例，预填充和随后两轮解码各确定一段 SID，完整候选在最后一轮结束后统一返回。
+vLLM-GR 启用异步调度后，主机可以在昇腾 NPU 执行当前阶段时准备下一轮解码，缩短轮次之间的等待。以三段式 SID 为例，预填充和随后两轮解码各确定一段 SID，完整候选在最后一轮结束后统一返回。
 
 ![BeamSearch 的 PDD 流水线优化。调度器接纳请求、准备提示词，并把预填充阶段交给设备端的 Beam Decoder。随后，每轮解码的准备工作都在前一阶段的设备执行期间进行。候选筛选先保留两个前缀，再保留三个，最终返回两个完整的 SID。](/assets/figures/2026-11-24-vllm-gr-announcement/00-async-pipeline-time-aligned.png)
 
@@ -63,9 +63,8 @@ vLLM-GR 复用 vLLM 的模型执行、调度和分页 KV 缓存。EngineCore 从
 | 昇腾 950 | 128 | 29.12 | 72.1 | 128.2 |
 | 昇腾 950 | 256 | 35.53 | 86.7 | 151.7 |
 
-在昇腾 950 上，批大小为 8、束宽为 256 时，P99 端到端延迟为 **151.7 ms**。
-
-在昇腾 910（A2）的长序列测试中，输入长度为 8,192 个 token、批大小为 8，vLLM-GR 完成了束宽最高为 1,024 的整组测试。
+- **昇腾 950 的端到端延迟。** 输入长度为 1,024 个 token、批大小为 8 时，束宽 128 和 256 对应的 P99 端到端延迟分别为 **128.2 ms** 和 **151.7 ms**。
+- **昇腾 910（A2）的长历史测试。** 输入长度为 8,192 个 token、批大小为 8 时，vLLM-GR 完成了束宽最高为 1,024 的整组测试。
 
 ## 从离线验证到在线部署
 
