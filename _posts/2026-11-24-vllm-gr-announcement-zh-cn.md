@@ -30,7 +30,9 @@ vLLM-GR 复用 vLLM 的模型执行、调度和分页 KV 缓存。EngineCore 从
 
 ### 候选在 NPU 上筛完，直接进入下一轮
 
-每轮束搜索生成候选前缀后，NPU 按物品目录约束表过滤无法延伸为有效物品的前缀，再保留得分最高的路径。筛选结果直接进入下一轮设备端解码，省去逐轮回传候选的开销。使用 NPU 约束表时，可以按阶段设置束宽和每条父路径的候选上限。昇腾也支持全词表搜索。[功能兼容性](https://github.com/vllm-project/vllm-gr/blob/main/docs/user_guide/feature_compatibility.md)
+每轮模型前向输出 logits 后，vLLM-GR 调用针对昇腾 NPU 优化的高性能后处理算子。启用物品目录约束时，约束 Top-K 算子（`rec_constrained_topk`）把目录查表和 Top-K 筛选融合在设备端，直接为每条父路径选出能够延伸为目录内物品的候选 token，并给出对应的对数概率。[约束表与算子实现](https://github.com/vllm-project/vllm-gr/blob/main/docs/design/module/constraint_tables.md)
+
+设备端束搜索算子再按累计分数选出保留路径，并记录对应的父路径索引。筛选结果直接用于下一轮解码，省去逐轮回传候选的开销。使用 NPU 约束表时，可以按阶段设置束宽和每条父路径的候选上限。昇腾也支持全词表搜索。[功能兼容性](https://github.com/vllm-project/vllm-gr/blob/main/docs/user_guide/feature_compatibility.md)
 
 ![一次请求依次搜索两条、三条、两条符合目录约束的路径。虚线分支表示被过滤的前缀。响应包含两个完整 SID 及其示例分数。](/assets/figures/2026-11-24-vllm-gr-announcement/catalog-beam-search.png)
 
