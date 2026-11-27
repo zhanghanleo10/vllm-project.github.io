@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="360" viewBox="0 0 1040 360" font-family="Open Sans, Arial, Helvetica, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Ascend NPU P99 latency at batch sizes 1, 4 and 8</title>
+  <desc id="d">Horizontal bars compare reported P99 latency on Ascend 910(A2) and Ascend 950 at 1,024 input tokens and beam width 128. Panels show batch sizes 1, 4, and 8. Lower latency is better. The axes span 0 to 200 milliseconds for batch size 1, 0 to 600 for batch size 4, and 0 to 1,800 for batch size 8. On Ascend 910(A2) and Ascend 950, vLLM-GR used catalog constraints. Measurement settings vary across runs.</desc>
+  <rect x="0" y="0" width="1040" height="360" fill="white"/>
+  <text x="24" y="43" font-size="30" fill="#192F3D" font-weight="700">Ascend NPU P99 latency at batch sizes 1, 4 and 8</text>
+  <text x="25" y="72" font-size="17" fill="#465B69">1,024 input tokens   ·   Beam width 128   ·   P99 in milliseconds, lower is better</text>
+  <rect x="26" y="95" width="18" height="8" fill="#AD2876"/>
+  <text x="52" y="104" font-size="14" fill="#192F3D">vLLM-GR</text>
+  <rect x="129" y="95" width="18" height="8" fill="#165ED6"/>
+  <text x="155" y="104" font-size="14" fill="#192F3D">SGLang</text>
+  <text x="1016" y="104" font-size="12.5" fill="#465B69" text-anchor="end">vLLM-GR used a catalog constraint table on Ascend 910(A2) and Ascend 950.</text>
+  <text x="143" y="143" font-size="18" fill="#192F3D" font-weight="700">Batch size 1</text>
+  <text x="143" y="162" font-size="13" fill="#465B69">0–200 ms</text>
+  <path d="M143 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="143" y="315" font-size="13" fill="#465B69" text-anchor="middle">0</text>
+  <path d="M203 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="203" y="315" font-size="13" fill="#465B69" text-anchor="middle">50</text>
+  <path d="M263 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="263" y="315" font-size="13" fill="#465B69" text-anchor="middle">100</text>
+  <path d="M323 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="323" y="315" font-size="13" fill="#465B69" text-anchor="middle">150</text>
+  <path d="M383 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="383" y="315" font-size="13" fill="#465B69" text-anchor="middle">200</text>
+  <text x="128" y="197" font-size="15" fill="#192F3D" text-anchor="end" font-weight="700">Ascend 910(A2)</text>
+  <text x="128" y="258" font-size="15" fill="#192F3D" text-anchor="end" font-weight="700">Ascend 950</text>
+  <rect x="143" y="179.7" width="70.296" height="9.6" fill="#AD2876"/>
+  <text x="217.30" y="188.5" font-size="12" fill="#192F3D">58.58</text>
+  <rect x="143" y="194.7" width="164.340" height="9.6" fill="#165ED6"/>
+  <text x="311.34" y="203.5" font-size="12" fill="#192F3D">136.95</text>
+  <rect x="143" y="240.7" width="34.944" height="9.6" fill="#AD2876"/>
+  <text x="181.94" y="249.5" font-size="12" fill="#192F3D">29.12</text>
+  <rect x="143" y="255.7" width="124.044" height="9.6" fill="#165ED6"/>
+  <text x="271.04" y="264.5" font-size="12" fill="#192F3D">103.37</text>
+  <path d="M143 224h240" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="441" y="143" font-size="18" fill="#192F3D" font-weight="700">Batch size 4</text>
+  <text x="441" y="162" font-size="13" fill="#465B69">0–600 ms</text>
+  <path d="M441 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="441" y="315" font-size="13" fill="#465B69" text-anchor="middle">0</text>
+  <path d="M521 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="521" y="315" font-size="13" fill="#465B69" text-anchor="middle">200</text>
+  <path d="M601 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="601" y="315" font-size="13" fill="#465B69" text-anchor="middle">400</text>
+  <path d="M681 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="681" y="315" font-size="13" fill="#465B69" text-anchor="middle">600</text>
+  <rect x="441" y="179.7" width="57.332" height="9.6" fill="#AD2876"/>
+  <text x="502.33" y="188.5" font-size="12" fill="#192F3D">143.33</text>
+  <rect x="441" y="194.7" width="167.820" height="9.6" fill="#165ED6"/>
+  <text x="612.82" y="203.5" font-size="12" fill="#192F3D">419.55</text>
+  <rect x="441" y="240.7" width="28.840" height="9.6" fill="#AD2876"/>
+  <text x="473.84" y="249.5" font-size="12" fill="#192F3D">72.1</text>
+  <rect x="441" y="255.7" width="100.760" height="9.6" fill="#165ED6"/>
+  <text x="545.76" y="264.5" font-size="12" fill="#192F3D">251.9</text>
+  <path d="M441 224h240" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="739" y="143" font-size="18" fill="#192F3D" font-weight="700">Batch size 8</text>
+  <text x="739" y="162" font-size="13" fill="#465B69">0–1,800 ms</text>
+  <path d="M739 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="739" y="315" font-size="13" fill="#465B69" text-anchor="middle">0</text>
+  <path d="M819 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="819" y="315" font-size="13" fill="#465B69" text-anchor="middle">600</text>
+  <path d="M899 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="899" y="315" font-size="13" fill="#465B69" text-anchor="middle">1,200</text>
+  <path d="M979 168V295" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="979" y="315" font-size="13" fill="#465B69" text-anchor="middle">1,800</text>
+  <rect x="739" y="179.7" width="34.167" height="9.6" fill="#AD2876"/>
+  <text x="777.17" y="188.5" font-size="12" fill="#192F3D">256.25</text>
+  <rect x="739" y="194.7" width="115.740" height="9.6" fill="#165ED6"/>
+  <text x="858.74" y="203.5" font-size="12" fill="#192F3D">868.05</text>
+  <rect x="739" y="240.7" width="17.093" height="9.6" fill="#AD2876"/>
+  <text x="760.09" y="249.5" font-size="12" fill="#192F3D">128.2</text>
+  <rect x="739" y="255.7" width="64.733" height="9.6" fill="#165ED6"/>
+  <text x="807.73" y="264.5" font-size="12" fill="#192F3D">485.5</text>
+  <path d="M739 224h240" stroke="#E5EBEE" stroke-width="1" fill="none"/>
+  <text x="25" y="347" font-size="13" fill="#465B69">Measurements come from separate benchmark runs. Timing definitions and sample counts vary by source.</text>
+</svg>

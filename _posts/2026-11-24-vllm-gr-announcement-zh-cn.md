@@ -12,11 +12,11 @@ tags:
   - generative-recommendation
 ---
 
+![vLLM-GR 标志](/assets/figures/2026-11-24-vllm-gr-announcement/vLLM-GR.jpg)
+
 vLLM 社区正式发布 [**vLLM-GR**](https://github.com/vllm-project/vllm-gr)，并提供昇腾（Ascend）NPU 后端。vLLM-GR 0.30.0 基于 vLLM 0.30.0。开发者可以在昇腾上先跑通 OneRec-1.7B 的离线推理，再部署在线 HTTP 服务。模型前向和每轮束搜索的候选筛选在 NPU 上执行，应用提交一次请求即可拿到一组候选及其分数。
 
 在昇腾 950 的初步评测中，输入为 1,024 个 token、批大小为 8、束宽为 128 时，vLLM-GR 的 P99 端到端延迟为 **128.2 ms**。
-
-![vLLM-GR 标志](/assets/figures/2026-11-24-vllm-gr-announcement/vLLM-GR.jpg)
 
 ## 从长历史生成一组推荐候选
 
@@ -56,39 +56,21 @@ vLLM-GR 复用 vLLM 的模型执行、调度和分页 KV 缓存。昇腾后端�
 
 P99 端到端延迟包含主机 CPU 和设备的执行时间，测量结果会因具体机器而异。昇腾基准测试结果为初步数据，反映当前的优化进度。我们将继续优化 vLLM-GR 在昇腾上的性能。
 
-基准测试通过 P99 延迟展示束宽和批大小对生成式推荐尾延迟的影响。两张总览图将输入长度固定为 1,024 个 token，在昇腾 910（A2）和昇腾 950 上比较束宽 256 与 128、批大小 1、4 和 8 的结果。图表汇总了多组独立测试，各组使用的计时口径、样本量和后端设置有所不同。
+基准测试通过 P99 延迟展示束宽和批大小对生成式推荐尾延迟的影响。两张总览图将输入长度固定为 1,024 个 token，对比 vLLM-GR 与 SGLang 在昇腾 910（A2）和昇腾 950 上的表现，覆盖束宽 256 和 128、批大小 1、4 和 8。图表汇总了多组独立测试，各组使用的计时口径、样本量和后端设置有所不同。
 
-在昇腾 910（A2）和昇腾 950 上，vLLM-GR 与 xLLM 均使用了物品目录约束表。
+vLLM-GR 在两款昇腾 NPU 上均启用了物品目录约束表。
 
-![昇腾 910（A2）和昇腾 950 在束宽为 256、输入长度为 1,024 个 token，批大小分别为 1、4 和 8 时的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview.svg)
+![束宽为 256、输入长度为 1,024 个 token 时，vLLM-GR 与 SGLang 在昇腾 910（A2）和昇腾 950 上的 P99 延迟，批大小分别为 1、4 和 8。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-vllm-gr-sglang.svg)
 
-![昇腾 910（A2）和昇腾 950 在束宽为 128、输入长度为 1,024 个 token，批大小分别为 1、4 和 8 时的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg)
+![束宽为 128、输入长度为 1,024 个 token 时，vLLM-GR 与 SGLang 在昇腾 910（A2）和昇腾 950 上的 P99 延迟，批大小分别为 1、4 和 8。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128-vllm-gr-sglang.svg)
 
-束宽为 256 时，在两款 NPU 上，vLLM-GR 在批大小为 4 和 8 的测试中均取得图中所列后端的最低 P99。在昇腾 910（A2）上，批大小为 8 时，vLLM-GR 和 xLLM 的延迟分别为 312.69 ms 和 324.60 ms，两者均启用了目录约束。
+### 昇腾 910（A2）
 
-展开下方各硬件平台的图表，可以查看更大范围内不同束宽和输入长度下的延迟变化。具体测试范围因加速器和批大小而异。
+输入为 1,024 个 token、束宽为 256 时，vLLM-GR 在批大小为 4 和 8 的测试中的 P99 均低于 SGLang，其中批大小为 8 时的 P99 为 **312.69 ms**。在长序列测试中，输入为 8,192 个 token、批大小为 8 时，vLLM-GR 完成了束宽最高为 1,024 的整组测试。
 
-<details markdown="1">
-<summary markdown="0">昇腾 910（A2）· B=1、B=4 和 B=8</summary>
+### 昇腾 950
 
-部分曲线未延伸到最后一组配置，因为对应测试超出了设备内存容量。在输入长度为 8,192 个 token、批大小为 8 时，vLLM-GR 完成了束宽最高为 1,024 的整组测试。
-
-![昇腾 910（A2）上，批大小为 1 时，vLLM-GR、SGLang 和 xLLM 在不同束宽和输入长度下的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2-b1.png)
-
-![昇腾 910（A2）上，批大小为 4（上）和 8（下）时，在相同的束宽和输入长度范围内测得的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">昇腾 950 · B=1、B=4 和 B=8</summary>
-
-批大小为 8、束宽为 256 时，vLLM-GR 的 P99 为 151.7 ms。在两张总览图对应的束宽下，vLLM-GR 在三个批大小的测试中均取得图中所列后端的最低 P99。
-
-![昇腾 950 上，批大小为 1 时，不同束宽和输入长度下的 P99 延迟，单位为毫秒。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5-b1.png)
-
-![昇腾 950 上，批大小为 4（上）和 8（下）时的 P99 延迟。图中展示了输入长度为 1,024 和 8,192 个 token 时延迟随束宽的变化，以及束宽为 64 和 1,024 时延迟随输入长度的变化。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5.png)
-
-</details>
+输入为 1,024 个 token、批大小为 8 时，vLLM-GR 在束宽为 128 和 256 时的 P99 分别为 **128.2 ms** 和 **151.7 ms**。在两种束宽下，vLLM-GR 在批大小为 1、4 和 8 的测试中的 P99 均低于 SGLang。
 
 ## 快速入门
 
