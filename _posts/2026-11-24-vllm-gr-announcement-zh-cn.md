@@ -14,9 +14,11 @@ tags:
 
 ![vLLM-GR 标志](/assets/figures/2026-11-24-vllm-gr-announcement/vLLM-GR.jpg)
 
-vLLM 社区正式发布 [**vLLM-GR**](https://github.com/vllm-project/vllm-gr)，并提供昇腾（Ascend）NPU 后端。vLLM-GR 0.30.0 基于 vLLM 0.30.0。开发者可以在昇腾上先跑通 OneRec-1.7B 的离线推理，再部署在线 HTTP 服务。模型前向和每轮束搜索的候选筛选在 NPU 上执行，应用提交一次请求即可拿到一组候选及其分数。
+vLLM 社区正式发布 [**vLLM-GR**](https://github.com/vllm-project/vllm-gr)。以 OneRec-1.7B 为例，本文给出一套**面向昇腾（Ascend）NPU 的生成式推荐推理最佳实践**，覆盖从离线推理验证到在线 HTTP 服务部署的流程。
 
-在昇腾 950 的初步评测中，输入为 1,024 个 token、批大小为 8、束宽为 128 时，vLLM-GR 的 P99 端到端延迟为 **128.2 ms**。
+在昇腾 NPU 上，模型前向和每轮束搜索的候选筛选均在设备端完成，减少了主机与设备之间的数据往返。多条候选路径共享用户历史的 KV 缓存，避免重复存储。应用发起一次请求即可获得一组推荐候选及其分数。
+
+在昇腾 950 的初步评测中，输入长度为 1,024 个 token、批大小为 8、束宽为 128 时，vLLM-GR 的 **P99 端到端延迟仅为 128.2 ms**。
 
 ## 从长历史生成一组推荐候选
 
@@ -66,6 +68,8 @@ vLLM-GR 复用 vLLM 的模型执行、调度和分页 KV 缓存。昇腾后端�
 在昇腾 910（A2）的长序列测试中，输入长度为 8,192 个 token、批大小为 8，vLLM-GR 完成了束宽最高为 1,024 的整组测试。
 
 ## 快速入门
+
+vLLM-GR 0.30.0 基于 vLLM 0.30.0。
 
 1. **准备昇腾环境。** 根据设备选择对应镜像，安装 CANN 运行环境和 vLLM-GR 所需的算子，并完成环境检查。[昇腾 NPU 安装指南](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/npu.md)
 
