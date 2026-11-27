@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "vLLM-GR 正式发布：面向生成式推荐的高效推理"
+title: "vLLM-GR 发布：面向生成式推荐的高效推理"
 author: vLLM-GR Team
 date: 2026-11-24 00:00:00 +0800
 summary: "vLLM-GR 扩展了 vLLM，使其能够为生成式推荐模型提供推理服务，支持加速器端束搜索、物品目录约束，以及候选路径间共享 KV 缓存。"
@@ -28,7 +28,7 @@ tags:
 
 推荐服务必须在单次请求的延迟预算内，把较长的交互历史转化为一组候选。每个物品 ID 可能只需要生成几个 token，但引擎需要搜索多条路径，并返回应用实际可以提供的物品。
 
-1. **在 vLLM 技术栈上运行推荐模型。** 从离线评估迁移到 NVIDIA GPU 或昇腾 NPU 上的在线服务时，团队可以复用 vLLM 的模型执行、调度和分页 KV 缓存。
+1. **在 vLLM 技术栈上运行推荐模型。** 在昇腾 NPU 上从离线评估迁移到在线服务时，团队可以复用 vLLM 的模型执行、调度和分页 KV 缓存。
 2. **降低宽束搜索的开销。** 候选路径共享已缓存的用户历史。引擎在一次请求中运行连续的束搜索步骤，并在加速器上筛选候选，从而减少重复工作以及每一步与主机的协调开销。
 3. **让推荐结果与物品目录保持一致。** 目录约束引导搜索生成可映射到真实物品的 ID。框架支持更新模型和目录，因此团队可以随模型和库存变化更新推荐结果。
 
@@ -56,83 +56,39 @@ vLLM-GR 将推荐搜索集成到 vLLM 引擎中。vLLM 提供调度器、模型�
 
 ## 性能评测
 
-基准测试以 P99 延迟衡量不同束宽和批大小对生成式推荐尾延迟的影响。两张总览图固定输入长度为 1,024 个 token，对比四款 NVIDIA GPU 和两款昇腾 NPU 在束宽为 256 或 128、批大小为 1、4 或 8 时的表现。图中各组测试分别执行，计时范围、样本量和后端设置有所不同。
+P99 端到端延迟包含主机 CPU 和设备的执行时间，测量结果会因具体机器而异。昇腾基准测试结果为初步数据，反映当前的优化进度。我们将继续优化 vLLM-GR 在昇腾上的性能。
 
-在 RTX PRO 6000 上，vLLM-GR、SGLang Beam 和 NVIDIA SID-GR 均以 BF16 运行 OneRec-1.7B，在同一组合成输入上生成三个 token，并关闭目录约束。每个数据点取三批预热后 48 个计时批次的整批 P99。计时覆盖将候选 ID 和分数返回主机的过程，HTTP 开销不计入。设束宽为 *W*、候选池大小为 *K*，vLLM-GR 和 NVIDIA SID-GR 采用 *K* = *W*，SGLang Beam 使用原生的 *2W* 候选池。
+基准测试通过 P99 延迟展示束宽和批大小对生成式推荐尾延迟的影响。两张总览图将输入长度固定为 1,024 个 token，在昇腾 910（A2）和昇腾 950 上比较束宽 256 与 128、批大小 1、4 和 8 的结果。图表汇总了多组独立测试，各组使用的计时口径、样本量和后端设置有所不同。
 
-在昇腾 A2 和 A5 上，vLLM-GR 和 xLLM 都使用了物品目录约束表。测试摘要未记录 SGLang 的约束设置。L20 各配置记录了 100 至 1,000 个计时批次。现有摘要没有列出这些对比的确切后端版本，预热次数也只有 RTX PRO 6000 这一组测试有明确记录。
+在昇腾 910（A2）和昇腾 950 上，vLLM-GR 与 xLLM 均使用了物品目录约束表。基准测试摘要未记录 SGLang 的约束设置，也未注明这些对比中各后端的具体修订版本和预热次数。
 
-![六款加速器在束宽为 256、输入长度为 1,024 个 token、批大小为 1、4 和 8 时的 P99 延迟。昇腾 A2 和 A5 上的 vLLM-GR 与 xLLM 均使用物品目录约束表。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview.svg)
+![昇腾 910（A2）和昇腾 950 在束宽为 256、输入长度为 1,024 个 token，批大小分别为 1、4 和 8 时的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview.svg)
 
-![六款加速器在束宽为 128、输入长度为 1,024 个 token、批大小为 1、4 和 8 时的 P99 延迟。昇腾 A2 和 A5 上的 vLLM-GR 与 xLLM 均使用物品目录约束表。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg)
+![昇腾 910（A2）和昇腾 950 在束宽为 128、输入长度为 1,024 个 token，批大小分别为 1、4 和 8 时的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg)
 
-束宽为 256 时，在六款加速器上，vLLM-GR 在批大小为 4 和 8 的测试中均取得图中所列后端的最低 P99。以 H20 为例，束宽为 256、批大小为 8 时，vLLM-GR、SGLang 和 NVIDIA SID-GR 的 P99 分别为 369.4 ms、1,280.1 ms 和 428.1 ms。
-
-在 RTX PRO 6000 上，束宽为 256、批大小为 1 时，NVIDIA SID-GR 的 P99 为 28.25 ms，vLLM-GR 为 29.21 ms。在昇腾 A2 上，同一束宽下将批大小设为 8，启用目录约束的 vLLM-GR 和 xLLM 分别测得 312.69 ms 和 324.60 ms。束宽为 128 时，P99 最低的后端随加速器和批大小变化。
+束宽为 256 时，在两款 NPU 上，vLLM-GR 在批大小为 4 和 8 的测试中均取得图中所列后端的最低 P99。在昇腾 910（A2）上，批大小为 8 时，vLLM-GR 和 xLLM 的延迟分别为 312.69 ms 和 324.60 ms，两者均启用了目录约束。
 
 展开下方各硬件平台的图表，可以查看更大范围内不同束宽和输入长度下的延迟变化。具体测试范围因加速器和批大小而异。
 
 <details markdown="1">
-<summary markdown="0">H20 · B=1、B=4 和 B=8</summary>
-
-当束宽为 256、批大小为 4 时，vLLM-GR 和 NVIDIA SID-GR 的 P99 均约为 191 ms。批大小为 8 时，两者的 P99 分别为 369.4 ms 和 428.1 ms。
-
-![H20 在批大小为 1 时，不同束宽和输入长度下的 P99 延迟，单位为毫秒。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/h20-b1.png)
-
-![H20 在批大小为 4（上）和 8（下）时的 P99 延迟。图中分别展示输入为 1,024 和 8,192 个 token 时的束宽扫描，以及束宽为 64 和 1,024 时的输入长度扫描。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/h20.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">RTX PRO 6000 · B=1、B=4 和 B=8</summary>
-
-在总览图的两档束宽下，批大小为 1 时，NVIDIA SID-GR 的 P99 最低。批大小为 4 和 8 时，vLLM-GR 在两档束宽下均取得最低 P99。
-
-![RTX PRO 6000 在批大小为 1、4 和 8（从上到下）时的 P99 延迟，单位为毫秒。每组图对比 vLLM-GR、SGLang Beam 和 NVIDIA SID-GR 在不同束宽和输入长度下的表现。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/rtx-pro-6000.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">A100 · B=1、B=4 和 B=8</summary>
-
-批大小为 8 时，束宽为 128 的配置下，NVIDIA SID-GR 和 vLLM-GR 的 P99 分别为 199.0 ms 和 209.7 ms。束宽为 256 时，vLLM-GR 和 NVIDIA SID-GR 分别为 274.5 ms 和 451.5 ms。
-
-![A100 在批大小为 1 时，不同束宽和输入长度下的 P99 延迟，单位为毫秒。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/a100-b1.png)
-
-![A100 在批大小为 4（上）和 8（下）时的 P99 延迟。图中分别展示输入为 1,024 和 8,192 个 token 时的束宽扫描，以及束宽为 64 和 1,024 时的输入长度扫描。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/a100.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">L20 · B=1、B=4 和 B=8</summary>
-
-批大小为 8、束宽为 256 时，vLLM-GR 测得 474.3 ms 的 P99，NVIDIA SID-GR 次之，为 790.7 ms。
-
-![L20 在批大小为 1 时，不同束宽和输入长度下的 P99 延迟，单位为毫秒。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/l20-b1.png)
-
-![L20 在批大小为 4（上）和 8（下）时的 P99 延迟。束宽扫描使用 1,024 个 token 输入，并分别为批大小 4 和 8 补充 8,192 和 4,096 个 token 的测试。批大小为 8、束宽为 64 和 1,024 时，输入长度扫描范围为 256 至 4,096 个 token。](https://raw.githubusercontent.com/vllm-project/vllm-project.github.io/main/assets/figures/2026-11-24-vllm-gr-announcement/p99/l20.png)
-
-</details>
-
-<details markdown="1">
-<summary markdown="0">昇腾 A2 · B=1、B=4 和 B=8</summary>
+<summary markdown="0">昇腾 910（A2）· B=1、B=4 和 B=8</summary>
 
 部分曲线未延伸到最后一组配置，因为对应测试超出了设备内存容量。在输入长度为 8,192 个 token、批大小为 8 时，vLLM-GR 完成了束宽最高为 1,024 的整组测试。
 
-![昇腾 A2 上，批大小为 1 时，vLLM-GR、SGLang 和 xLLM 在不同束宽和输入长度下的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2-b1.png)
+![昇腾 910（A2）上，批大小为 1 时，vLLM-GR、SGLang 和 xLLM 在不同束宽和输入长度下的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2-b1.png)
 
-![昇腾 A2 上，批大小为 4（上）和 8（下）时，在相同的束宽和输入长度范围内测得的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2.png)
+![昇腾 910（A2）上，批大小为 4（上）和 8（下）时，在相同的束宽和输入长度范围内测得的 P99 延迟。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a2.png)
 
 </details>
 
 <details markdown="1">
-<summary markdown="0">昇腾 A5 · B=1、B=4 和 B=8</summary>
+<summary markdown="0">昇腾 950 · B=1、B=4 和 B=8</summary>
 
 批大小为 8 时，vLLM-GR 在束宽为 128 时的 P99 为 128.2 ms，在束宽为 256 时为 151.7 ms。在两张总览图对应的束宽下，vLLM-GR 在三个批大小的测试中均取得图中所列后端的最低 P99。
 
-![昇腾 A5 上，批大小为 1 时，不同束宽和输入长度下的 P99 延迟，单位为毫秒。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5-b1.png)
+![昇腾 950 上，批大小为 1 时，不同束宽和输入长度下的 P99 延迟，单位为毫秒。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5-b1.png)
 
-![昇腾 A5 上，批大小为 4（上）和 8（下）时的 P99 延迟。图中展示了输入长度为 1,024 和 8,192 个 token 时延迟随束宽的变化，以及束宽为 64 和 1,024 时延迟随输入长度的变化。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5.png)
+![昇腾 950 上，批大小为 4（上）和 8（下）时的 P99 延迟。图中展示了输入长度为 1,024 和 8,192 个 token 时延迟随束宽的变化，以及束宽为 64 和 1,024 时延迟随输入长度的变化。vLLM-GR 和 xLLM 均使用了物品目录约束表。](/assets/figures/2026-11-24-vllm-gr-announcement/p99/a5.png)
 
 </details>
 
@@ -149,15 +105,15 @@ vLLM-GR 将推荐搜索集成到 vLLM 引擎中。vLLM 提供调度器、模型�
 
 ## 快速入门
 
-vLLM-GR 0.30.0 基于 vLLM 0.30.0，支持 NVIDIA GPU 和昇腾 NPU。
+vLLM-GR 0.30.0 基于 vLLM 0.30.0，支持昇腾 NPU。
 
 ### 安装
 
-根据所用加速器，参照相应的 [NVIDIA CUDA 安装指南](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/gpu.md) 或 [昇腾 NPU 安装指南](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/npu.md)。
+请参照 [昇腾 NPU 安装指南](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/npu.md) 完成安装。
 
 ### 部署生成式推荐模型
 
-可以 [离线运行 OneRec-1.7B](https://github.com/vllm-project/vllm-gr/blob/main/examples/offline_inference/beam_search/README.md)，也可以参考 [HTTP 服务示例](https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/beam_search/README.md) 或 [CUDA gRPC 服务示例](https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/grpc/README.md)。
+按照 [昇腾离线快速入门](https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/quickstart.md#ascend) 运行 OneRec-1.7B。若要通过 HTTP 提供服务，请按 [OneRec 示例](https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/beam_search/README.md#run-one-request) 操作，并指定 `--constraint-backend npu`。
 
 ## 加入社区
 
@@ -172,6 +128,6 @@ vLLM-GR 0.30.0 基于 vLLM 0.30.0，支持 NVIDIA GPU 和昇腾 NPU。
 - [Inferact](https://inferact.ai/): [Zhipeng Wang](https://github.com/princepride), [Roger Wang](https://github.com/ywang96)
 - [InferMatrix Team](https://infermatrix.si/): [Han Zhang](https://github.com/zhanghanleo10), [Shucheng Zhang](https://github.com/candanzg), [Xiaodong Tian](https://github.com/parallel-star8), [Yunpeng Zhi](https://github.com/ZhiYunpenghuawei), [Yi Ding](https://github.com/DINGEde), [Jierui Yu](https://github.com/JerryTcl), [Hongsheng Liu](https://github.com/hsliuustc0106)
 - openPangu: [Xinming Han](https://github.com/Lechmere-1), [Zhiwei Yi](https://github.com/zhiweiyi11), [Mengyuan Ma](https://github.com/mengyuanuom), [Yongxiang Feng](https://github.com/fxy18)
-- TikTok-Global E-commerce: [Bin Wang](https://github.com/wangbin-cs), [Junye Long](https://github.com/LJHG)
-- Data-Arch-China Commerce and Advertising-ML Infra: [Haoran Ma](https://github.com/MaTwickenham), [Wenqiang Zhou](https://github.com/SENGEL-code), [Junwen Guo](https://github.com/CrazyKing5023)
-- LingQuAI: [Chunxu Jin](https://github.com/Trenx-J), [Wuping Liu](https://github.com/wupingL)
+- TikTok-Global E-commerce: [Bin Wang](https://github.com/wangbin-cs), [Junhua Long](https://github.com/LJHG)
+- ByteDance-Commerce & Advertising: [Haoran Ma](https://github.com/MaTwickenham), [Wenqiang Zhou](https://github.com/SENGEL-code), [Junwen Guo](https://github.com/CrazyKing5023)
+- Lingquai: [Chunxu Jin](https://github.com/Trenx-J), [Wuping Liu](https://github.com/wupingL)
